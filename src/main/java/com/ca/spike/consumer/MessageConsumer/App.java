@@ -24,16 +24,16 @@ public class App {
 		connectionFactory.setAlwaysSessionAsync(true);
 		Connection connection = connectionFactory.createConnection();
 		connection.start();
-		Thread t1 = new Thread(new Consumer(connection, queueName, startLatch),"1");
-		Thread t2 = new Thread(new Consumer(connection, queueName, startLatch),"2");
-		Thread t3 = new Thread(new Consumer(connection, queueName, startLatch),"3");
-		Thread t4 = new Thread(new Consumer(connection, queueName, startLatch),"4");
-		Thread t5 = new Thread(new Consumer(connection, queueName, startLatch),"5");
-		Thread t6 = new Thread(new Consumer(connection, queueName, startLatch),"6");
-		Thread t7 = new Thread(new Consumer(connection, queueName, startLatch),"7");
-		Thread t8 = new Thread(new Consumer(connection, queueName, startLatch),"8");
-		Thread t9 = new Thread(new Consumer(connection, queueName, startLatch),"9");
-		Thread t10 = new Thread(new Consumer(connection, queueName, startLatch),"10");
+		Thread t1 = new Thread(new Consumer(null, null, startLatch),"1");
+		Thread t2 = new Thread(new Consumer(null, null, startLatch),"2");
+//		Thread t3 = new Thread(new Consumer(null, null, startLatch),"3");
+//		Thread t4 = new Thread(new Consumer(null, null, startLatch),"4");
+//		Thread t5 = new Thread(new Consumer(null, null, startLatch),"5");
+//		Thread t6 = new Thread(new Consumer(connection, queueName, startLatch),"6");
+//		Thread t7 = new Thread(new Consumer(connection, queueName, startLatch),"7");
+//		Thread t8 = new Thread(new Consumer(connection, queueName, startLatch),"8");
+//		Thread t9 = new Thread(new Consumer(connection, queueName, startLatch),"9");
+//		Thread t10 = new Thread(new Consumer(connection, queueName, startLatch),"10");
 //		Thread t11 = new Thread(new Consumer(connection, queueName, startLatch),"11");
 //		Thread t12 = new Thread(new Consumer(connection, queueName, startLatch),"12");
 //		Thread t13 = new Thread(new Consumer(connection, queueName, startLatch),"13");
@@ -46,14 +46,14 @@ public class App {
 //		Thread t20 = new Thread(new Consumer(connection, queueName, startLatch),"20");
 		t1.start();
 		t2.start();
-		t3.start();
-		t4.start();
-		t5.start();
-		t6.start();
-		t7.start();
-		t8.start();
-		t9.start();
-		t10.start();
+//		t3.start();
+//		t4.start();
+//		t5.start();
+//		t6.start();
+//		t7.start();
+//		t8.start();
+//		t9.start();
+//		t10.start();
 //		t11.start();
 //		t12.start();
 //		t13.start();
@@ -73,16 +73,25 @@ public class App {
 		private String queueName;
 		private Session session;
 		private CountDownLatch startLatch;
+		ActiveMQConnectionFactory connectionFactory;
 
 		Consumer(Connection connection, String queueName, CountDownLatch startLatch) {
-			this.connection = connection;
-			this.queueName = queueName;
+//			this.connection = connection;
+//			this.queueName = queueName;
 			this.startLatch=startLatch;
 		}
 
-		@Override
+//		@Override
 		public void run() {
 			try {
+				
+				String uri = "nio://SHAGA12:61616";
+				String queueName = "firstQueue?socketBufferSize=131072&ioBufferSize=16384&consumer.prefetchSize=20";
+				connectionFactory = new ActiveMQConnectionFactory(uri);
+				connectionFactory.isDispatchAsync();
+				connectionFactory.setAlwaysSessionAsync(true);
+				connection = connectionFactory.createConnection();
+				connection.start();
 				
 				session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
 				

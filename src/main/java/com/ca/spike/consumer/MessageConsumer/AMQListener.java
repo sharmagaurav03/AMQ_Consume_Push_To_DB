@@ -16,9 +16,7 @@ import javax.jms.MessageListener;
 public class AMQListener implements MessageListener {
 	private static final String NEWLINE = "\n";
 	static AtomicLong totalTime = new AtomicLong(0);
-	int start = 0;
-	long startTime;
-	HashMap<String, Integer> map = new HashMap<String, Integer>();
+	private HashMap<String, Integer> map = new HashMap<String, Integer>();
 	private String sql;
 	private Connection connection;
 	private PreparedStatement preparedStatement;
@@ -60,23 +58,13 @@ public class AMQListener implements MessageListener {
 	}
 
 	public void onMessage(Message message) {
-		if (start++ == 0)
-			startTime = System.currentTimeMillis();
 		BytesMessage byteMessage = (BytesMessage) message;
 		try {
 			byte[] messageData = new byte[(int) byteMessage.getBodyLength()];
 			byteMessage.readBytes(messageData);
 			String textMessage = new String(messageData, "UTF-8");
 			saveMessage(textMessage);
-
-			/*if (start % 600 == 0) {
-				// System.out.println(Thread.currentThread().getName() + " " +
-				// (System.currentTimeMillis() - startTime));
-				System.out.println(System.currentTimeMillis()-startTime);
-				startTime = System.currentTimeMillis();
-			}
-*/
-		} catch (JMSException | UnsupportedEncodingException | SQLException e) {
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
 
@@ -85,6 +73,43 @@ public class AMQListener implements MessageListener {
 	public int saveMessage(String eventMessages) throws SQLException {
 		return usingWithoutSplitAtAll(eventMessages);
 	}
+	
+	
+	private int usingWithoutSplit(String content) throws SQLException {
+
+		int startIndex = 0;
+		int endIndex = 0;
+		int length = content.length();
+		String keyValue = null;
+		PreparedStatement preparedStatement = getPreparedStatement();
+		
+		while (startIndex < length) {
+			endIndex = content.indexOf(NEWLINE, startIndex);
+			endIndex = endIndex > 0 ? endIndex : length;
+			keyValue = content.substring(startIndex, endIndex);
+			startIndex = endIndex + 1;
+			int colonIndex = keyValue.indexOf(":");
+			if (colonIndex < 0) {
+				if ("EVENT_END".equals(keyValue.trim())) {
+//					preparedStatement.addBatch();
+					++batchSize;
+				}
+				continue;
+			}
+			String field = keyValue.substring(0, colonIndex);
+			String value = keyValue.substring(colonIndex + 1, keyValue.length());
+			
+			if (map.containsKey(field))
+				preparedStatement.setString(map.get(field), value);
+		}
+		int resultset = 0;
+		if (batchSize % 900 == 0)
+		{
+//			int[] resultsets = preparedStatement.executeBatch();
+			this.connection.commit();
+		}
+		return resultset;
+}
 	
 	private int usingWithoutSplitAtAll(String content) throws SQLException {
 
@@ -102,7 +127,7 @@ public class AMQListener implements MessageListener {
 				int colonIndex = keyValue.indexOf(":");
 				if (colonIndex < 0) {
 					if ("EVENT_END".equals(keyValue.trim())) {
-						preparedStatement.addBatch();
+//						preparedStatement.addBatch();
 						++batchSize;
 					}
 					continue;
@@ -116,79 +141,12 @@ public class AMQListener implements MessageListener {
 			int resultset = 0;
 			if (batchSize % 900 == 0)
 			{
-				int[] resultsets = preparedStatement.executeBatch();
-//				for(int k = 0; k<resultsets.length;k++)
-//				{
-//					System.out.print(resultsets[k]+", ");
-//				}
+//				int[] resultsets = preparedStatement.executeBatch();
 				this.connection.commit();
 			}
 			return resultset;
 	}
 
-	private int parseWithoutUsingSplit(String eventMessages) throws SQLException {
-
-		long startTime = System.currentTimeMillis();
-		PreparedStatement preparedStatement = getPreparedStatement();
-		String[] keyValue = eventMessages.split("\n");
-
-		for (int j = 0; j < keyValue.length; j++) {
-			if (keyValue[j].trim().length() == 0)
-				continue;
-			if ("EVENT_END".equals(keyValue[j])) {
-				preparedStatement.addBatch();
-				batchSize++;
-				continue;
-			}
-			int colonIndex = keyValue[j].indexOf(":");
-
-			String field = keyValue[j].substring(0, colonIndex);
-			String value = keyValue[j].substring(colonIndex + 1, keyValue[j].length());
-			if (map.containsKey(field))
-				preparedStatement.setString(map.get(field), value);
-		}
-
-		// }
-		int resultset = 0;
-		if (batchSize % 900 == 0)
-		{
-			resultset = preparedStatement.executeUpdate();
-//			getConnection().commit();
-		}
-
-		System.out.println(totalTime.addAndGet(System.currentTimeMillis() - startTime));
-		return resultset;
-
-	}
-	
-
-	private int[] parseUsingSplit(String eventMessages) throws SQLException {
-		long startTime = System.currentTimeMillis();
-		PreparedStatement preparedStatement = getPreparedStatement();
-		String[] eventMessagesArray = eventMessages.split("EVENT_END\n");
-
-		for (String eventMessage : eventMessagesArray) {
-
-			if (eventMessage.trim().length() == 0)
-				continue;
-
-			String[] keyValue = eventMessage.split("\n");
-			for (int j = 0; j < keyValue.length; j++) {
-				int colonIndex = keyValue[j].indexOf(":");
-				String field = null;
-				field = keyValue[j].substring(0, colonIndex);
-				String value = keyValue[j].substring(colonIndex + 1, keyValue[j].length());
-				if (map.containsKey(field))
-					preparedStatement.setString(map.get(field), value);
-			}
-			preparedStatement.addBatch();
-
-		}
-		int[] resultset = preparedStatement.executeBatch();
-
-		System.out.println(totalTime.addAndGet(System.currentTimeMillis() - startTime));
-		return resultset;
-	}
 
 	private PreparedStatement getPreparedStatement() throws SQLException {
 		return this.preparedStatement;
@@ -201,11 +159,10 @@ public class AMQListener implements MessageListener {
 			e.printStackTrace();
 		}
 
-		String connectionUrl = "jdbc:sqlserver://SHAGA12\\SPIKE:1433;database=SPIKE;user=test;password=N0tall0wed;packetSize=4096;sendStringParametersAsUnicode=false;";
+		String connectionUrl = "jdbc:sqlserver://SHAGA12\\SPIKE:1433;database=SPIKE;user=test;password=N0tall0wed;packetSize=4096;";
 		try {
 			Connection con = DriverManager.getConnection(connectionUrl);
 			con.setAutoCommit(false);
-//			con.setTransactionIsolation(Connection.TRANSACTION_READ_UNCOMMITTED);
 			return con;
 		} catch (SQLException e1) {
 			e1.printStackTrace();
