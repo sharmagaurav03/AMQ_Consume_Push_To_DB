@@ -25,7 +25,7 @@ public class App {
 		Connection connection = connectionFactory.createConnection();
 		connection.start();
 		Thread t1 = new Thread(new Consumer(null, null, startLatch),"1");
-		Thread t2 = new Thread(new Consumer(null, null, startLatch),"2");
+//		Thread t2 = new Thread(new Consumer(null, null, startLatch),"2");
 //		Thread t3 = new Thread(new Consumer(null, null, startLatch),"3");
 //		Thread t4 = new Thread(new Consumer(null, null, startLatch),"4");
 //		Thread t5 = new Thread(new Consumer(null, null, startLatch),"5");
@@ -45,7 +45,7 @@ public class App {
 //		Thread t19 = new Thread(new Consumer(connection, queueName, startLatch),"19");
 //		Thread t20 = new Thread(new Consumer(connection, queueName, startLatch),"20");
 		t1.start();
-		t2.start();
+//		t2.start();
 //		t3.start();
 //		t4.start();
 //		t5.start();
