@@ -16,15 +16,8 @@ import org.apache.activemq.ActiveMQConnectionFactory;
  */
 public class App {
 	public static void main(String[] args) throws JMSException, InterruptedException {
-		String uri = "nio://SHAGA12:61616";
-		String queueName = "firstQueue?socketBufferSize=131072&ioBufferSize=16384&consumer.prefetchSize=20";
-		ActiveMQConnectionFactory connectionFactory = new ActiveMQConnectionFactory(uri);
-		connectionFactory.isDispatchAsync();
 		CountDownLatch startLatch = new CountDownLatch(1);
-		connectionFactory.setAlwaysSessionAsync(true);
-		Connection connection = connectionFactory.createConnection();
-		connection.start();
-		Thread t1 = new Thread(new Consumer(null, null, startLatch),"1");
+		Thread t1 = new Thread(new Consumer(startLatch),"1");
 //		Thread t2 = new Thread(new Consumer(null, null, startLatch),"2");
 //		Thread t3 = new Thread(new Consumer(null, null, startLatch),"3");
 //		Thread t4 = new Thread(new Consumer(null, null, startLatch),"4");
@@ -69,22 +62,17 @@ public class App {
 	}
 
 	static class Consumer implements Runnable {
-		private Connection connection;
-		private String queueName;
-		private Session session;
 		private CountDownLatch startLatch;
-		ActiveMQConnectionFactory connectionFactory;
 
-		Consumer(Connection connection, String queueName, CountDownLatch startLatch) {
-//			this.connection = connection;
-//			this.queueName = queueName;
+		Consumer(CountDownLatch startLatch) {
 			this.startLatch=startLatch;
 		}
 
-//		@Override
 		public void run() {
 			try {
-				
+				ActiveMQConnectionFactory connectionFactory=null;
+				Connection connection=null;
+				Session session = null;
 				String uri = "nio://SHAGA12:61616";
 				String queueName = "firstQueue?socketBufferSize=131072&ioBufferSize=16384&consumer.prefetchSize=20";
 				connectionFactory = new ActiveMQConnectionFactory(uri);
@@ -92,9 +80,7 @@ public class App {
 				connectionFactory.setAlwaysSessionAsync(true);
 				connection = connectionFactory.createConnection();
 				connection.start();
-				
 				session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
-				
 				 Queue queue = session.createQueue(queueName);
 				 MessageConsumer consumer=session.createConsumer(queue);
 				 AMQListener amqListener=new AMQListener();
