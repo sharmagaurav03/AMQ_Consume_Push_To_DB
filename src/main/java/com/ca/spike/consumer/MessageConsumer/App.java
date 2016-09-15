@@ -18,8 +18,8 @@ public class App {
 	public static void main(String[] args) throws JMSException, InterruptedException {
 		CountDownLatch startLatch = new CountDownLatch(1);
 		Thread t1 = new Thread(new Consumer(startLatch),"1");
-//		Thread t2 = new Thread(new Consumer(null, null, startLatch),"2");
-//		Thread t3 = new Thread(new Consumer(null, null, startLatch),"3");
+		Thread t2 = new Thread(new Consumer(startLatch),"2");
+//		Thread t3 = new Thread(new Consumer(startLatch),"3");
 //		Thread t4 = new Thread(new Consumer(null, null, startLatch),"4");
 //		Thread t5 = new Thread(new Consumer(null, null, startLatch),"5");
 //		Thread t6 = new Thread(new Consumer(connection, queueName, startLatch),"6");
@@ -38,7 +38,7 @@ public class App {
 //		Thread t19 = new Thread(new Consumer(connection, queueName, startLatch),"19");
 //		Thread t20 = new Thread(new Consumer(connection, queueName, startLatch),"20");
 		t1.start();
-//		t2.start();
+		t2.start();
 //		t3.start();
 //		t4.start();
 //		t5.start();
@@ -88,10 +88,12 @@ public class App {
 					 
 					startLatch.await();
 				} catch (InterruptedException e) {
+					System.out.println("App catch InterruptedException "+e);
 					e.printStackTrace();
 				}
 				 consumer.setMessageListener(amqListener);
 			} catch (JMSException e) {
+				System.out.println("App catch JMSException "+e);
 				e.printStackTrace();
 			} 
 

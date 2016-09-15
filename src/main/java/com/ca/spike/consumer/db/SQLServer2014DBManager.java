@@ -3,7 +3,7 @@ package com.ca.spike.consumer.db;
 import java.sql.*;
 import org.apache.commons.dbcp2.*;
 
-public class DBManager {
+public class SQLServer2014DBManager {
 	private static volatile BasicDataSource connectionPool = null;
 	static {
 		try {

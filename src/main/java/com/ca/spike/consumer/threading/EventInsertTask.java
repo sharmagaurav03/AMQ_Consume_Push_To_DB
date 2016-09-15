@@ -13,8 +13,6 @@ public class EventInsertTask implements Runnable {
 	}
 
 	public void run() {
-		long time=System.currentTimeMillis();
-
 		try {
 			int startIndex = 0;
 			int endIndex = 0;
@@ -47,13 +45,11 @@ public class EventInsertTask implements Runnable {
 			connection.commit();
 		} catch (SQLException e) {
 			e.printStackTrace();
+			System.out.println("Error : EventInsertTask.Run->catch" + e);
 		}
 		catch(Exception e)
 		{
-			e.printStackTrace();
-		}
-		finally{
-			System.out.println(System.currentTimeMillis()-time);
+			System.out.println("Error : EventInsertTask.Run->Finally" + e);
 		}
 	}
 

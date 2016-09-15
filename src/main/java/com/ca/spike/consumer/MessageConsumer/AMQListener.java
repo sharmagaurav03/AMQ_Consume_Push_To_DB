@@ -22,6 +22,7 @@ public class AMQListener implements MessageListener {
 			messageData=null;
 			saveMessage(textMessage);
 		} catch (Exception e) {
+			System.out.println("Error: EventDataInsertExecutor.onMessage");
 			e.printStackTrace();
 		}
 
