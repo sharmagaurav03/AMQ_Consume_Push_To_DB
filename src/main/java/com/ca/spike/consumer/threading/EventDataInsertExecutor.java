@@ -21,28 +21,30 @@ public class EventDataInsertExecutor {
 
 		ThreadFactory threadFactory = new ThreadFactory() {
 			public Thread newThread(Runnable task) {
-				EventDataInsertWorkerThread thread = new EventDataInsertWorkerThread(task, "EventDataInsertWorkerThread - " + counter++);
+				EventDataInsertWorkerThread thread = new EventDataInsertWorkerThread(task,
+						"EventDataInsertWorkerThread - " + counter++);
 				thread.setUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
-					
+
 					@Override
 					public void uncaughtException(Thread exceptionedThread, Throwable error) {
-						System.out.println("Error EventDataInsertWorkerThread.uncaughtExceptionHandler" +error);
+						System.out.println("Error EventDataInsertWorkerThread.uncaughtExceptionHandler" + error);
 						try {
-							EventDataInsertWorkerThread thread = (EventDataInsertWorkerThread)exceptionedThread;
+							EventDataInsertWorkerThread thread = (EventDataInsertWorkerThread) exceptionedThread;
 							thread.preparedStatement.get().close();
 							thread.localConnection.get().close();
 						} catch (SQLException e) {
-							System.out.println("Error EventDataInsertWorkerThread.uncaughtExceptionHandler-->Catch SQLException" +e);
+							System.out.println(
+									"Error EventDataInsertWorkerThread.uncaughtExceptionHandler-->Catch SQLException"
+											+ e);
 							e.printStackTrace();
 						}
-					
-						
+
 					}
 				});
-				return thread; 
+				return thread;
 			}
 		};
-		LinkedBlockingQueue<Runnable> blockingQueue = new LinkedBlockingQueue<Runnable>(1000);
+		LinkedBlockingQueue<Runnable> blockingQueue = new LinkedBlockingQueue<Runnable>(10000);
 
 		this.executor = new ThreadPoolExecutor(POOL_SIZE, POOL_SIZE, 500L, TimeUnit.MILLISECONDS, blockingQueue,
 				threadFactory);
@@ -54,31 +56,35 @@ public class EventDataInsertExecutor {
 	}
 
 	public void execute(EventInsertTask eventInsertTask) {
-		try{
-		executor.execute(eventInsertTask);
-		}catch(Exception e)
-		{
+		try {
+			executor.execute(eventInsertTask);
+		} catch (Exception e) {
 			System.out.println(executor.getActiveCount());
 			System.out.println(executor.getPoolSize());
 			System.out.println(executor.getLargestPoolSize());
 			e.printStackTrace();
-			
+
 			System.exit(0);
 		}
 	}
 
 	public class EventDataInsertWorkerThread extends Thread {
 		private HashMap<String, Integer> map = new HashMap<String, Integer>();
-		private String sql = new String("insert into spike (EVENT_HEADER, `Target host`, `Event type`, Status, Class, Resource, "
-				+ "Access, `User name`, Terminal, Program, Date, Time, Details, `User Logon Session ID`, "
-				+ "`Audit flags`,`Effective user name`, nStatus,`Time Stamp`, nReason, nStage) "
-				+ "values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
-				
+		private String sql = new String(
+				"insert into spike (EVENT_HEADER, `Target host`, `Event type`, Status, Class, Resource, "
+						+ "Access, `User name`, Terminal, Program, Date, Time, Details, `User Logon Session ID`, "
+						+ "`Audit flags`,`Effective user name`, nStatus,`Time Stamp`, nReason, nStage) "
+						+ "values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
 
 		ThreadLocal<Connection> localConnection = new ThreadLocal<Connection>() {
 			@Override
 			protected Connection initialValue() {
 				Connection connection = MYSQL57DBManager.getConnection();
+				try {
+					connection.setAutoCommit(false);
+				} catch (SQLException e) {
+					e.printStackTrace();
+				}
 				return connection;
 			}
 
@@ -97,9 +103,15 @@ public class EventDataInsertExecutor {
 			}
 
 		};
-		
+		ThreadLocal<Integer> batchSize = new ThreadLocal<Integer>() {
+			@Override
+			protected Integer initialValue() {
+				return 0;
+			}
+		};
+
 		public EventDataInsertWorkerThread(Runnable task, String name) {
-			super(task,name);
+			super(task, name);
 			map.put("EVENT_HEADER", 1);
 			map.put("Target host", 2);
 			map.put("Event type", 3);

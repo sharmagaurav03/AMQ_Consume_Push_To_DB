@@ -9,11 +9,11 @@ public class MYSQL57DBManager {
 		try {
 			try {
 				Class.forName("com.mysql.cj.jdbc.Driver").newInstance();
-				String connectionUrl =("jdbc:mysql://shaga12-I180958:3306/spike?user=test&password=*0D3CED9BEC10A777AEC23CCC353A8C08A633045E#%25@abcd&autoReconnect=true&useSSL=false");
+				String connectionUrl =("jdbc:mysql://shaga12-I180958:3306/spike?user=test&password=N0tall0wed&autoReconnect=true&useSSL=false");
 				connectionPool = new BasicDataSource();
 				connectionPool.setDriverClassName("com.mysql.cj.jdbc.Driver");
 				connectionPool.setUrl(connectionUrl);
-				connectionPool.setInitialSize(20);
+				connectionPool.setInitialSize(6);
 			} catch (InstantiationException | IllegalAccessException e) {
 				e.printStackTrace();
 			}

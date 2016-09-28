@@ -88,7 +88,7 @@ public class App {
 				ActiveMQConnectionFactory connectionFactory = null;
 				Connection connection = null;
 				Session session = null;
-				String uri = "nio://SHAGA12-I181930:61616";
+				String uri = "nio://shaga12-i181930:61616";
 				String queueName = "firstQueue?socketBufferSize=131072&ioBufferSize=16384&consumer.prefetchSize=20";
 				connectionFactory = new ActiveMQConnectionFactory(uri);
 				connectionFactory.isDispatchAsync();

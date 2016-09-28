@@ -41,8 +41,19 @@ public class EventInsertTask implements Runnable {
 				if (map.containsKey(field))
 					preparedStatement.setString(map.get(field), value);
 			}
-			preparedStatement.executeBatch();
-			connection.commit();
+			int batchSize=((EventDataInsertWorkerThread) Thread.currentThread()).batchSize.get();
+			if(batchSize == 4)
+			{
+				long time=System.currentTimeMillis();
+				preparedStatement.executeBatch();
+				connection.commit();
+				((EventDataInsertWorkerThread) Thread.currentThread()).batchSize.set(0);
+				System.out.println(System.currentTimeMillis()-time);
+			}
+			else
+			{
+				((EventDataInsertWorkerThread) Thread.currentThread()).batchSize.set(++batchSize);
+			}
 		} catch (SQLException e) {
 			e.printStackTrace();
 			System.out.println("Error : EventInsertTask.Run->catch" + e);
@@ -51,6 +62,7 @@ public class EventInsertTask implements Runnable {
 		{
 			System.out.println("Error : EventInsertTask.Run->Finally" + e);
 		}
+		
 	}
 
 	private String content = null;
